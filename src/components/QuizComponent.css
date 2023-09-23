@@ -204,8 +204,4 @@ body, html {
     justify-content: center;
   }
   
-  /* Apply margin to navigation items */
-  .navigation li {
-    margin: 0 5px;
-  }
   

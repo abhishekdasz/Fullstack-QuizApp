@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom'; // Import useHistory
 import './QuizComponent.css'; // Import the CSS file
 import QuizReport from './QuizReport';
 
@@ -13,56 +12,47 @@ function shuffleArray(array) {
   return shuffledArray;
 }
 
-// Initial quiz data with shuffled options
-const initialQuizData = {
-  response_code: 0,
-  results: [
-    {
-      category: 'Entertainment: Television',
-      type: 'multiple',
-      difficulty: 'medium',
-      question: "In the original Doctor Who series (1963), fourth doctor Tom Baker's scarf was how long?",
-      correct_answer: '7 Meters',
-      incorrect_answers: ['10 Meters', '2 Meters', '5 Meters'],
-    },
-    {
-      category: 'Entertainment: Video Games',
-      type: 'multiple',
-      difficulty: 'hard',
-      question: 'In "Halo", what is the name of the planet which Installation 04 orbits?',
-      correct_answer: 'Threshold',
-      incorrect_answers: ['Substance', 'Sanghelios', 'Te'],
-    },
-    {
-      category: 'Politics',
-      type: 'boolean',
-      difficulty: 'easy',
-      question: 'Donald Trump won the popular vote in the 2016 United States presidential election.',
-      correct_answer: 'False',
-      incorrect_answers: ['True'],
-    },
-  ],
-};
-
 const QuizComponent = () => {
   const [quizData, setQuizData] = useState([]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [scores, setScores] = useState(Array(initialQuizData.results.length).fill(0));
+  const [scores, setScores] = useState([]);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(1800); // 30 minutes in seconds
   const [score, setScore] = useState(0);
-  const [userAnswers, setUserAnswers] = useState(Array(initialQuizData.results.length).fill(''));
+  const [userAnswers, setUserAnswers] = useState([]);
   const [correctAnswers, setCorrectAnswers] = useState([]);
   const [viewingReport, setViewingReport] = useState(false);
 
   useEffect(() => {
-    // Initialize quiz data with the hardcoded initialQuizData and shuffle options
-    const shuffledQuizData = initialQuizData.results.map((question) => ({
-      ...question,
-      options: shuffleArray([question.correct_answer, ...question.incorrect_answers]),
-    }));
-    setQuizData(shuffledQuizData);
+    // Fetch quiz data from the API
+    async function fetchQuizData() {
+      try {
+        const response = await fetch('https://opentdb.com/api.php?amount=15');
+        if (response.ok) {
+          const data = await response.json();
+          const fetchedQuizData = data.results.map((question) => ({
+            category: question.category,
+            type: question.type,
+            difficulty: question.difficulty,
+            question: question.question,
+            correct_answer: question.correct_answer,
+            incorrect_answers: question.incorrect_answers,
+            options: shuffleArray([question.correct_answer, ...question.incorrect_answers]),
+          }));
+          setQuizData(fetchedQuizData);
+          setScores(Array(fetchedQuizData.length).fill(0));
+          setUserAnswers(Array(fetchedQuizData.length).fill(''));
+          setCorrectAnswers(fetchedQuizData.map((question) => question.correct_answer));
+        } else {
+          console.error('Failed to fetch quiz data');
+        }
+      } catch (error) {
+        console.error('Error fetching quiz data:', error);
+      }
+    }
+
+    fetchQuizData();
   }, []);
 
   useEffect(() => {
@@ -88,6 +78,14 @@ const QuizComponent = () => {
     return scores.reduce((acc, score) => acc + score, 0);
   };
 
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+    return `${formattedMinutes}:${formattedSeconds}`;
+  };
+
   const handleSubmitQuiz = () => {
     // Update the user's answer for the current question
     const newUserAnswers = [...userAnswers];
@@ -96,21 +94,22 @@ const QuizComponent = () => {
 
     // Calculate the score for the current question and update it
     const newScores = [...scores];
-    if (selectedOption === quizData[questionIndex].correct_answer) {
+    if (selectedOption === correctAnswers[questionIndex]) {
       newScores[questionIndex] = 1;
     }
     setScores(newScores);
 
-    // Calculate the total score across all questions
-    const totalScore = newScores.reduce((acc, score) => acc + score, 0);
-    setScore(totalScore);
-
-    setQuizCompleted(true);
+    if (questionIndex < quizData.length - 1) {
+      setQuestionIndex((prevQuestionIndex) => prevQuestionIndex + 1);
+      setSelectedOption(newUserAnswers[questionIndex + 1]); // Set selected option for the next question
+    } else {
+      const totalScore = calculateTotalScore();
+      setScore(totalScore);
+      setQuizCompleted(true);
+    }
   };
 
   const handleFinishQuiz = () => {
-    const totalScore = calculateTotalScore();
-    setScore(totalScore);
     setViewingReport(true);
   };
 
@@ -128,10 +127,8 @@ const QuizComponent = () => {
 
     // Calculate the score for the current question
     const newScores = [...scores];
-    if (selectedOption === currentQuestion.correct_answer) {
+    if (selectedOption === correctAnswers[questionIndex]) {
       newScores[questionIndex] = 1;
-    } else {
-      newScores[questionIndex] = 0;
     }
     setScores(newScores);
 
@@ -150,12 +147,6 @@ const QuizComponent = () => {
     }
   };
 
-  useEffect(() => {
-    // Generate an array of correct answers based on the shuffled options
-    const correctAnswersArray = quizData.map((question) => question.correct_answer);
-    setCorrectAnswers(correctAnswersArray);
-  }, [quizData]);
-
   const handleNavigateToQuestion = (index) => {
     setQuestionIndex(index);
     setSelectedOption(userAnswers[index]);
@@ -165,12 +156,12 @@ const QuizComponent = () => {
     <div className="container">
       {!viewingReport && (
         <div className="navigation-container">
-          <h2 className="navigation-header">Navigation Panel</h2>
+          {/* <h2 className="navigation-header">Navigation Panel</h2> */}
           <ul className="navigation">
             {quizData.map((_, index) => (
               <li key={index}>
                 <button onClick={() => handleNavigateToQuestion(index)} className={`navigation-button ${questionIndex === index ? 'active' : ''}`}>
-                  Question {index + 1}
+                  {index + 1}
                 </button>
               </li>
             ))}
@@ -178,7 +169,7 @@ const QuizComponent = () => {
         </div>
       )}
       <div>
-        <h1 className="header">Timer: {timer} seconds</h1>
+        <h1 className="header">Time left {formatTime(timer)}</h1>
       </div>
       <div>
         {quizData.length > 0 && !quizCompleted ? (
