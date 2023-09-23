@@ -30,26 +30,30 @@ const Quiz = () => {
         // setSelectedOptionIndex(optIndex);
     }
     const handleNextQue = () => {
-        if (selectedOptions.length === 0) {
-            alert("Please select at least one option before proceeding.");
-            return;
-        }
-        if (selectedOptions.length > 0) 
+        const question = QuizData[currQueIndex];
+        const allSelectedAreCorrect = selectedOptions.every((option) => option.isCorrect);
+        const allCorrectOptionsSelected = selectedOptions.length === question.options.filter(opt => opt.isCorrect).length;
+  
+        if (allSelectedAreCorrect && allCorrectOptionsSelected) 
         {
-            const question = QuizData[currQueIndex];
-            const allSelectedAreCorrect = selectedOptions.every((option) => option.isCorrect);
-            const allCorrectOptionsSelected = selectedOptions.length === question.options.filter(opt => opt.isCorrect).length;
-      
-            if (allSelectedAreCorrect && allCorrectOptionsSelected) {
-                setScore(score + 1);
-            }
-      
-            if (currQueIndex < QuizData.length - 1) {
-                setCurrQueIndex(currQueIndex + 1);
-                setSelectedOptions([]);
-            }
+            setScore(score + 1);
+        }
+  
+        if (currQueIndex < QuizData.length - 1) 
+        {
+            setCurrQueIndex(currQueIndex + 1);
+            setSelectedOptions([]);
         }
     }
+
+    const handlePreviousQue = () => {
+        if (currQueIndex > 0) {
+          setCurrQueIndex(currQueIndex - 1);
+          setSelectedOptions([]);
+        }
+      };
+      
+
     const handleSubmitQuiz = () =>{
         if (selectedOptions.length > 0) 
         {
@@ -96,11 +100,16 @@ const Quiz = () => {
             {opt.label}
           </label>
         ))}
-            {
-                currQueIndex < QuizData.length-1 ? 
-                ( <button onClick={handleNextQue}> Next </button> ) :
-                ( <button onClick={handleSubmitQuiz}> Submit </button> )
-            }
+        <div>
+          {currQueIndex > 0 && (
+            <button onClick={handlePreviousQue}>Previous</button>
+          )}
+          {currQueIndex < QuizData.length - 1 ? (
+            <button onClick={handleNextQue}>Next</button>
+          ) : (
+            <button onClick={handleSubmitQuiz}>Submit</button>
+          )}
+        </div>
             
         </div>
     </div>
