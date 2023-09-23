@@ -227,3 +227,4 @@ const QuizComponent = () => {
 };
 
 export default QuizComponent;
+ 
