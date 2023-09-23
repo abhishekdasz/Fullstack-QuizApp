@@ -1,9 +1,10 @@
 import React from 'react';
 
-const QuizReport = ({ userAnswers, correctAnswers, questions }) => {
+const QuizReport = ({ userAnswers, correctAnswers, questions, score }) => {
     return (
       <div>
         <h1>Quiz Report</h1>
+        <p>Your Score: {score} / {questions.length}</p>
         <table>
           <thead>
             <tr>

@@ -41,10 +41,11 @@ const initialQuizData = {
   ],
 };
 
-const QuizReport = ({ userAnswers, correctAnswers, questions }) => {
+const QuizReport = ({ userAnswers, correctAnswers, questions, score }) => {
   return (
     <div>
       <h1>Quiz Report</h1>
+      <p>Your Score: {score} / {questions.length}</p>
       <table>
         <thead>
           <tr>
@@ -107,16 +108,36 @@ const QuizComponent = () => {
     };
   }, [quizCompleted, timer]);
 
+  const calculateTotalScore = () => {
+    return scores.reduce((acc, score) => acc + score, 0); 
+  }
+  
   const handleSubmitQuiz = () => {
-    // Calculate the total score
-    const totalScore = scores.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    // Update the user's answer for the current question
+    const newUserAnswers = [...userAnswers];
+    newUserAnswers[questionIndex] = selectedOption;
+    setUserAnswers(newUserAnswers);
+  
+    // Calculate the score for the current question and update it
+    const newScores = [...scores];
+    if (selectedOption === quizData[questionIndex].correct_answer) {
+      newScores[questionIndex] = 1;
+    }
+    setScores(newScores);
+  
+    // Calculate the total score across all questions
+    const totalScore = newScores.reduce((acc, score) => acc + score, 0);
     setScore(totalScore);
+  
     setQuizCompleted(true);
   };
+  
 
   const handleFinishQuiz = () => {
-    setViewingReport(true);
-  };
+    const totalScore = calculateTotalScore(); // calculate total score
+    setScore(totalScore); // update score state
+    setViewingReport(true); 
+  }
 
   const handleOptionChange = (option) => {
     setSelectedOption(option);
@@ -223,7 +244,7 @@ const QuizComponent = () => {
             </div>
           )
         ) : (
-          <QuizReport userAnswers={userAnswers} correctAnswers={correctAnswers} questions={quizData} />
+          <QuizReport userAnswers={userAnswers} correctAnswers={correctAnswers} questions={quizData} score={score} />
         )}
       </div>
     </div>
