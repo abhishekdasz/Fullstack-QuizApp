@@ -58,7 +58,7 @@ const QuizReport = ({ userAnswers, correctAnswers, questions }) => {
             <tr key={index}>
               <td>{question.question}</td>
               <td>{userAnswers[index]}</td>
-              <td>{correctAnswers[index]}</td>
+              <td>{question.correct_answer}</td>
             </tr>
           ))}
         </tbody>
@@ -141,7 +141,7 @@ const QuizComponent = () => {
 
     if (questionIndex < quizData.length - 1) {
       setQuestionIndex((prevQuestionIndex) => prevQuestionIndex + 1);
-      setSelectedOption(null);
+      setSelectedOption(newUserAnswers[questionIndex + 1]); // Set selected option for the next question
     } else {
       handleSubmitQuiz();
     }
@@ -150,18 +150,20 @@ const QuizComponent = () => {
   const handlePreviousQuestion = () => {
     if (questionIndex > 0) {
       setQuestionIndex((prevQuestionIndex) => prevQuestionIndex - 1);
-      setSelectedOption(userAnswers[questionIndex - 1]); // Restore the previously selected option
+      setSelectedOption(userAnswers[questionIndex - 1]); // Set selected option for the previous question
     }
   };
 
   useEffect(() => {
     // Generate an array of correct answers based on the shuffled options
-    const correctAnswersArray = quizData.map((question) => {
-      const correctIndex = question.options.indexOf(question.correct_answer);
-      return String.fromCharCode(65 + correctIndex); // Convert index to option letter (A, B, C, etc.)
-    });
+    const correctAnswersArray = quizData.map((question) => question.correct_answer);
     setCorrectAnswers(correctAnswersArray);
   }, [quizData]);
+
+  const handleNavigateToQuestion = (index) => {
+    setQuestionIndex(index);
+    setSelectedOption(userAnswers[index]);
+  };
 
   return (
     <div>
@@ -205,7 +207,9 @@ const QuizComponent = () => {
                 <ul>
                   {quizData.map((_, index) => (
                     <li key={index}>
-                      <button onClick={() => setQuestionIndex(index)}>Question {index + 1}</button>
+                      <button onClick={() => handleNavigateToQuestion(index)}>
+                        Question {index + 1}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -227,4 +231,3 @@ const QuizComponent = () => {
 };
 
 export default QuizComponent;
- 
