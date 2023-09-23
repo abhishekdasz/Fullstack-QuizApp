@@ -1,14 +1,20 @@
-import React from 'react'
-import Quiz from './components/Quiz'
-import Quizz from './components/Quizz'
+import React from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import QuizComponent from './components/QuizComponent';
+import QuizReport from './components/QuizReport';
+import NavPage from './components/NavPage';
 
-const App = () => {
+function App() {
   return (
-    <div>
-      {/* <Quiz/> */}
-      <Quizz/>
-    </div>
-  )
+    <BrowserRouter>
+      {/* <NavPage /> */}
+      <Routes>
+        <Route path="/" element={<QuizComponent />} />
+        <Route path="/report" element={<QuizReport />} />
+        {/* Define more routes as needed */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
